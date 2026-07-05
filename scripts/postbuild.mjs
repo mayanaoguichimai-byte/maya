@@ -1,4 +1,4 @@
-import { cpSync, existsSync, writeFileSync } from "fs";
+import { cpSync, existsSync, unlinkSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -17,11 +17,12 @@ if (existsSync(netlifySrc)) {
   console.warn("⚠ .netlify directory not found, skipping copy");
 }
 
-// Overwrite _redirects: route all non-static-file requests through Nitro handler
-writeFileSync(
-  join(distClient, "_redirects"),
-  "/* /.netlify/functions-internal/server/main 200\n"
-);
-console.log("✓ Wrote _redirects for SSR routing");
+// DELETE the SPA _redirects file so Netlify auto-discovers .netlify/functions-internal
+// Netlify will automatically route unmatched requests to the Nitro handler
+const redirectsFile = join(distClient, "_redirects");
+if (existsSync(redirectsFile)) {
+  unlinkSync(redirectsFile);
+  console.log("✓ Deleted _redirects (Netlify will auto-route to Nitro functions-internal)");
+}
 
 console.log("Post-build complete.");
